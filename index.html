@@ -68,7 +68,7 @@
 
 <canvas id="c"></canvas>
 <div id="counter">
-  <div class="label">Bounces</div>
+  <div class="label">BuBunz</div>
   <div class="value" id="countVal">0</div>
 </div>
 <div id="overlay">
@@ -84,8 +84,9 @@
   const overlay  = document.getElementById('overlay');
   const startBtn = document.getElementById('startBtn');
 
+  const VERSION      = 'v1.0.0';
   const BALL_R       = Math.round(Math.min(window.innerWidth, window.innerHeight) * 0.07);
-  const DAMPING      = 0.997;
+  const DAMPING      = 0.95;
   const ACCEL_FACTOR = 0.9;
   const MAX_SPEED    = 20;
 
@@ -106,6 +107,11 @@
   function draw() {
     ctx.fillStyle = '#228B22';
     ctx.fillRect(0, 0, W, H);
+
+    ctx.font = '13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.textAlign = 'left';
+    ctx.fillText(VERSION, 12, H - 12);
 
     ctx.beginPath();
     ctx.arc(bx + 3, by + 6, BALL_R, 0, Math.PI * 2);
