@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Bunz</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%;
+      background: #228B22;
+      overflow: hidden;
+      touch-action: none;
+      user-select: none;
+    }
+    canvas { display: block; position: fixed; top: 0; left: 0; }
+    #counter {
+      position: fixed;
+      top: env(safe-area-inset-top, 16px);
+      right: 18px;
+      margin-top: 12px;
+      text-align: center;
+      background: rgba(0,0,0,0.28);
+      border-radius: 14px;
+      padding: 6px 16px 8px;
+      pointer-events: none;
+      z-index: 10;
+    }
+    #counter .label {
+      color: #fff; font-size: 10px; font-weight: 700;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    #counter .value {
+      color: #fff; font-size: 40px; font-weight: 800; line-height: 1.1;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    #overlay {
+      position: fixed; inset: 0;
+      background: rgba(10,50,10,0.72);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 16px; z-index: 20;
+    }
+    #overlay h1 {
+      color: #fff; font-size: 42px; font-weight: 900; letter-spacing: -1px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    #overlay p {
+      color: rgba(255,255,255,0.75); font-size: 15px; text-align: center;
+      max-width: 260px; line-height: 1.5;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    #startBtn {
+      margin-top: 12px; background: #E30000; color: #fff;
+      border: none; border-radius: 50px; padding: 18px 52px;
+      font-size: 20px; font-weight: 700; cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+      -webkit-tap-highlight-color: transparent;
+    }
+    #startBtn:active { transform: scale(0.96); }
+  </style>
+</head>
+<body>
+
+<canvas id="c"></canvas>
+<div id="counter">
+  <div class="label">Bounces</div>
+  <div class="value" id="countVal">0</div>
+</div>
+<div id="overlay">
+  <h1>Bunz</h1>
+  <p>Shake or flick your phone to move the ball. It bounces off the walls!</p>
+  <button id="startBtn">Tap to Play</button>
+</div>
+
+<script>
+  const canvas   = document.getElementById('c');
+  const ctx      = canvas.getContext('2d');
+  const countEl  = document.getElementById('countVal');
+  const overlay  = document.getElementById('overlay');
+  const startBtn = document.getElementById('startBtn');
+
+  const BALL_R       = Math.round(Math.min(window.innerWidth, window.innerHeight) * 0.07);
+  const DAMPING      = 0.997;
+  const ACCEL_FACTOR = 0.9;
+  const MAX_SPEED    = 20;
+
+  let W, H, bx, by;
+  let vx = 2.5, vy = 1.5;
+  let accelX = 0, accelY = 0;
+  let bounces = 0;
+  const touching = { left: false, right: false, top: false, bottom: false };
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    if (bx === undefined) { bx = W / 2; by = H / 2; }
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function draw() {
+    ctx.fillStyle = '#228B22';
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.beginPath();
+    ctx.arc(bx + 3, by + 6, BALL_R, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,0,0,0.22)';
+    ctx.filter = 'blur(6px)';
+    ctx.fill();
+    ctx.filter = 'none';
+
+    const grad = ctx.createRadialGradient(
+      bx - BALL_R * 0.3, by - BALL_R * 0.3, BALL_R * 0.05,
+      bx, by, BALL_R
+    );
+    grad.addColorStop(0, '#ff5555');
+    grad.addColorStop(0.55, '#E30000');
+    grad.addColorStop(1, '#6b0000');
+
+    ctx.beginPath();
+    ctx.arc(bx, by, BALL_R, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(bx - BALL_R * 0.3, by - BALL_R * 0.3, BALL_R * 0.22, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.fill();
+  }
+
+  function update() {
+    vx += accelX * ACCEL_FACTOR;
+    vy += accelY * ACCEL_FACTOR;
+    vx *= DAMPING;
+    vy *= DAMPING;
+    vx = Math.max(-MAX_SPEED, Math.min(MAX_SPEED, vx));
+    vy = Math.max(-MAX_SPEED, Math.min(MAX_SPEED, vy));
+    bx += vx;
+    by += vy;
+
+    let added = 0;
+
+    if (bx <= BALL_R) {
+      bx = BALL_R; vx = Math.abs(vx);
+      if (!touching.left)   { touching.left   = true; added++; }
+    } else { touching.left = false; }
+
+    if (bx >= W - BALL_R) {
+      bx = W - BALL_R; vx = -Math.abs(vx);
+      if (!touching.right)  { touching.right  = true; added++; }
+    } else { touching.right = false; }
+
+    if (by <= BALL_R) {
+      by = BALL_R; vy = Math.abs(vy);
+      if (!touching.top)    { touching.top    = true; added++; }
+    } else { touching.top = false; }
+
+    if (by >= H - BALL_R) {
+      by = H - BALL_R; vy = -Math.abs(vy);
+      if (!touching.bottom) { touching.bottom = true; added++; }
+    } else { touching.bottom = false; }
+
+    if (added > 0) {
+      bounces += added;
+      countEl.textContent = bounces;
+    }
+  }
+
+  function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  function setupMotion() {
+    const gravity = { x: 0, y: 0 };
+    const ALPHA = 0.85;
+
+    window.addEventListener('devicemotion', e => {
+      const raw = e.accelerationIncludingGravity;
+      if (!raw) return;
+      gravity.x = ALPHA * gravity.x + (1 - ALPHA) * (raw.x || 0);
+      gravity.y = ALPHA * gravity.y + (1 - ALPHA) * (raw.y || 0);
+      accelX =  (raw.x || 0) - gravity.x;
+      accelY = -((raw.y || 0) - gravity.y);
+    });
+  }
+
+  function setupMouseFallback() {
+    let lastX = null, lastY = null;
+    window.addEventListener('mousemove', e => {
+      if (lastX !== null) {
+        accelX = (e.clientX - lastX) * 0.8;
+        accelY = (e.clientY - lastY) * 0.8;
+      }
+      lastX = e.clientX;
+      lastY = e.clientY;
+    });
+    const decay = () => { accelX *= 0.85; accelY *= 0.85; requestAnimationFrame(decay); };
+    decay();
+    window.addEventListener('mouseleave', () => { accelX = 0; accelY = 0; lastX = null; lastY = null; });
+  }
+
+  startBtn.addEventListener('click', () => {
+    overlay.style.display = 'none';
+    const hasMotion = typeof DeviceMotionEvent !== 'undefined';
+    const needsPermission = hasMotion && typeof DeviceMotionEvent.requestPermission === 'function';
+    if (needsPermission) {
+      DeviceMotionEvent.requestPermission()
+        .then(s => { if (s === 'granted') setupMotion(); else setupMouseFallback(); })
+        .catch(() => setupMouseFallback());
+    } else if (hasMotion) {
+      setupMotion();
+    } else {
+      setupMouseFallback();
+    }
+    loop();
+  });
+</script>
+</body>
+</html>
