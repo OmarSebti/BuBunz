@@ -88,10 +88,10 @@
   const BALL_R       = Math.round(Math.min(window.innerWidth, window.innerHeight) * 0.07);
   const DAMPING      = 0.97;
   const ACCEL_FACTOR = 0.9;
-  const MAX_SPEED    = 20;
+  const MAX_SPEED    = 35;
 
   let W, H, bx, by;
-  let vx = 2.5, vy = 1.5;
+  let vx = 5, vy = 3;
   let accelX = 0, accelY = 0;
   let bounces = 0;
   const touching = { left: false, right: false, top: false, bottom: false };
@@ -124,9 +124,9 @@
       bx - BALL_R * 0.3, by - BALL_R * 0.3, BALL_R * 0.05,
       bx, by, BALL_R
     );
-    grad.addColorStop(0, '#ff5555');
-    grad.addColorStop(0.55, '#E30000');
-    grad.addColorStop(1, '#6b0000');
+    grad.addColorStop(0, '#fff176');
+    grad.addColorStop(0.55, '#FFD700');
+    grad.addColorStop(1, '#b8860b');
 
     ctx.beginPath();
     ctx.arc(bx, by, BALL_R, 0, Math.PI * 2);
