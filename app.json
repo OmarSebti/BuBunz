@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "BuBunz",
+    "slug": "bubunz",
+    "version": "1.0.1",
+    "orientation": "portrait",
+    "backgroundColor": "#228B22",
+    "ios": {
+      "bundleIdentifier": "com.bubunz.app",
+      "infoPlist": {
+        "NSMotionUsageDescription": "BuBunz uses motion to move the ball."
+      }
+    },
+    "android": {
+      "package": "com.bubunz.app",
+      "permissions": ["HIGH_SAMPLING_RATE_SENSORS"]
+    },
+    "plugins": [
+      ["expo-sensors", { "motionPermission": "BuBunz needs motion access to move the ball." }]
+    ]
+  }
+}
