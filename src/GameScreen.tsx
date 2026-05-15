@@ -24,6 +24,9 @@ import {
 } from 'react-native-reanimated';
 import { Accelerometer } from 'expo-sensors';
 import { useScore } from './hooks/useScore';
+import { useAuth } from './hooks/useAuth';
+import { AuthModal } from './AuthModal';
+import { ScoreboardModal } from './ScoreboardModal';
 
 const DAMPING = 0.97;
 const ACCEL_FACTOR = 0.9;
@@ -35,7 +38,11 @@ const BALL_R = Math.round(Math.min(SCREEN_W, SCREEN_H) * 0.07);
 
 export function GameScreen() {
   const [playing, setPlaying] = useState(false);
-  const { count, reportBounce } = useScore();
+  const [authVisible, setAuthVisible] = useState(false);
+  const [scoreboardVisible, setScoreboardVisible] = useState(false);
+
+  const { count, reportBounce, sessionId } = useScore();
+  const auth = useAuth(sessionId);
 
   const bx = useSharedValue(SCREEN_W / 2);
   const by = useSharedValue(SCREEN_H / 2);
@@ -172,6 +179,10 @@ export function GameScreen() {
     setPlaying(true);
   }
 
+  const userButtonLabel = auth.profile
+    ? auth.profile.nickname.slice(0, 10)
+    : '👤';
+
   return (
     <View style={styles.container} {...(playing ? panResponder.panHandlers : {})}>
       <Canvas style={StyleSheet.absoluteFill}>
@@ -212,6 +223,24 @@ export function GameScreen() {
         <Text style={styles.scoreValue}>{count}</Text>
       </View>
 
+      {/* Profile/auth button top-left */}
+      <TouchableOpacity
+        style={styles.userButton}
+        onPress={() => setAuthVisible(true)}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.userButtonText} numberOfLines={1}>{userButtonLabel}</Text>
+      </TouchableOpacity>
+
+      {/* Scoreboard button bottom-right */}
+      <TouchableOpacity
+        style={styles.scoreboardButton}
+        onPress={() => setScoreboardVisible(true)}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.scoreboardButtonText}>🏆</Text>
+      </TouchableOpacity>
+
       {/* Splash overlay */}
       {!playing && (
         <View style={styles.overlay}>
@@ -224,6 +253,18 @@ export function GameScreen() {
           </TouchableOpacity>
         </View>
       )}
+
+      <AuthModal
+        visible={authVisible}
+        onClose={() => setAuthVisible(false)}
+        auth={auth}
+      />
+
+      <ScoreboardModal
+        visible={scoreboardVisible}
+        onClose={() => setScoreboardVisible(false)}
+        currentUserId={auth.user?.id ?? null}
+      />
     </View>
   );
 }
@@ -268,6 +309,34 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     lineHeight: 44,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  userButton: {
+    position: 'absolute',
+    top: 48,
+    left: 18,
+    backgroundColor: 'rgba(0,0,0,0.28)',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    maxWidth: 120,
+  },
+  userButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  scoreboardButton: {
+    position: 'absolute',
+    bottom: 40,
+    right: 18,
+    backgroundColor: 'rgba(0,0,0,0.28)',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  scoreboardButtonText: {
+    fontSize: 24,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
