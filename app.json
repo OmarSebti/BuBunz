@@ -2,6 +2,7 @@
   "expo": {
     "name": "BuBunz",
     "slug": "bubunz",
+    "scheme": "bubunz",
     "version": "1.0.1",
     "orientation": "portrait",
     "backgroundColor": "#228B22",

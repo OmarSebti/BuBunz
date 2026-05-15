@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import * as SecureStore from 'expo-secure-store';
-import 'react-native-get-random-values';
 import { supabase } from '../lib/supabase';
 
 const SESSION_KEY = 'bubunz_session_id';
@@ -13,7 +12,7 @@ function generateUUID(): string {
   });
 }
 
-export function useScore(): { count: number; reportBounce: () => void } {
+export function useScore(): { count: number; reportBounce: () => void; sessionId: string | null } {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [count, setCount] = useState(0);
 
@@ -53,5 +52,5 @@ export function useScore(): { count: number; reportBounce: () => void } {
       });
   }, [sessionId]);
 
-  return { count, reportBounce };
+  return { count, reportBounce, sessionId };
 }
